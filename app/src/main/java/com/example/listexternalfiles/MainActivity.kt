@@ -2,7 +2,6 @@ package com.example.listexternalfiles
 
 import MultipartUtility
 import android.Manifest
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,10 +11,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.text.InputType
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -280,7 +281,7 @@ class MainActivity : AppCompatActivity() {
 
 
                             ///set an alert dialog
-                           basicAlert(textView)
+                           basicAlert(textView, file.absolutePath)
 
                         }
 
@@ -305,7 +306,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     val positiveButtonClick = { dialog: DialogInterface, which: Int ->
-        MyTask("via", this).execute()
+        val a=5
+        //MyTask("via", this).execute()
         Unit
     }
 
@@ -319,29 +321,41 @@ class MainActivity : AppCompatActivity() {
         toast("du sagst vielleicht ")
     }
 
-    fun basicAlert(view: View){
+    fun basicAlert(view: TextView, path: String){
 
         val builder = AlertDialog.Builder(this)
+        val input = EditText(this)
+
+        input.inputType = InputType.TYPE_CLASS_TEXT
 
         with(builder)
         {
             setTitle("Androidly Alert")
-            setMessage("We have a message")
-            setPositiveButton("OK",DialogInterface.OnClickListener(positiveButtonClick))
+            setMessage("Where to send the apk to")
+            // Set up the input
+            // Set up the input
+
+            setView(input)
+            setPositiveButton(" OK",DialogInterface.OnClickListener { dialog: DialogInterface, which: Int ->
+                MyTask("via", this@MainActivity, input.text.toString(), path).execute()
+                Unit
+            })
             setNegativeButton(android.R.string.no, negativeButtonClick)
             setNeutralButton("Maybe", neutralButtonClick)
             show()
         }
 
 
+
     }
 
 
-     inner class MyTask(url: String, conte: Context) : AsyncTask<String?, Void?, String>() {
+     inner class MyTask(url: String, conte: MainActivity, input: String, fullpath: String) : AsyncTask<String?, Void?, String>() {
 
 
          public val conexi = conte
-
+         public val input = input
+         public val path = fullpath
          override fun onPostExecute(result: String?) {
             super.onPostExecute(result)
             // do something with the result
@@ -350,9 +364,11 @@ class MainActivity : AppCompatActivity() {
 
          override fun doInBackground(vararg params: String?): String {
              val charset = "UTF-8"
-             val uploadFile1 = File("/sdcard/test.txt")
+             var uploadFile1 = File("/sdcard/test.txt")
+             uploadFile1 = File(path)
              //val uploadFile2 = File("/sdcard/text.txt")
-             val requestURL = "http://192.168.0.145:8080/upload"
+             var requestURL = "http://192.168.0.145:8080/upload"
+             requestURL = "http://" + input + "/upload"
              try {
                  val multipart = MultipartUtility(requestURL, charset)
                  //multipart.addHeaderField("User-Agent", "CodeJava")
